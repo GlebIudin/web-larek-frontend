@@ -23,10 +23,6 @@ export class AppData extends Model<IAppState> {
 	preview: string | null;
 	formErrors: FormErrors = {};
 
-	getBasketItems(): IWebLarekData[] {
-		return this.basket;
-	}
-
 	addToBasket(product: IWebLarekData) {
 		this.basket.push(product);
 		this.emitChanges('basket:change');
@@ -35,15 +31,6 @@ export class AppData extends Model<IAppState> {
 	removeFromBasket(product: IWebLarekData) {
 		this.basket = this.basket.filter((item) => item.id !== product.id);
 		this.emitChanges('basket:change');
-	}
-
-	initBasket() {
-		this.basket = [];
-		this.emitChanges('basket:change');
-	}
-
-	getTotal(): number {
-		return this.basket.reduce((sum, item) => sum + item.price, 0);
 	}
 
 	setCatalog(products: IWebLarekData[]) {
@@ -56,6 +43,19 @@ export class AppData extends Model<IAppState> {
 	setPreview(product: IWebLarekData) {
 		this.preview = product.id;
 		this.emitChanges('preview:change', product);
+	}
+
+	getBasketItems(): IWebLarekData[] {
+		return this.basket;
+	}
+
+	initBasket() {
+		this.basket = [];
+		this.emitChanges('basket:change');
+	}
+
+	getTotal(): number {
+		return this.basket.reduce((sum, item) => sum + item.price, 0);
 	}
 
 	isProductAlreadyAdded(product: IWebLarekData): boolean {
@@ -87,6 +87,20 @@ export class AppData extends Model<IAppState> {
 		this.validateOrderContacts();
 	}
 
+	setOrderField(field: keyof IOrderAddress, value: string) {
+		this.order[field] = value;
+		if (this.validateOrderPaymentMethod()) {
+			this.events.emit('order:ready', this.order);
+		}
+	}
+
+	setContactsField(field: keyof IOrderContacts, value: string) {
+		this.order[field] = value;
+		if (this.validateOrderContacts()) {
+			this.events.emit('order:ready', this.order);
+		}
+	}
+
 	validateOrderPaymentMethod() {
 		const errors: typeof this.formErrors = {};
 		if (!this.order.payment) {
@@ -111,19 +125,5 @@ export class AppData extends Model<IAppState> {
 		this.formErrors = errors;
 		this.events.emit('formContactsInvalid:change', this.formErrors);
 		return Object.keys(errors).length === 0;
-	}
-
-	setOrderField(field: keyof IOrderAddress, value: string) {
-		this.order[field] = value;
-		if (this.validateOrderPaymentMethod()) {
-			this.events.emit('order:ready', this.order);
-		}
-	}
-
-	setContactsField(field: keyof IOrderContacts, value: string) {
-		this.order[field] = value;
-		if (this.validateOrderContacts()) {
-			this.events.emit('order:ready', this.order);
-		}
 	}
 }
