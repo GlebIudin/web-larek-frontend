@@ -1,46 +1,36 @@
-import {Component} from "./base/Component";
-import {IEvents} from "./base/events";
-import {ensureElement} from "../utils/utils";
-
-interface IPage {
-    counter: number;
-    catalog: HTMLElement[];
-    locked: boolean;
-}
+import { Component } from './base/Component';
+import { IPage } from '../types';
+import { IEvents } from './base/events';
+import { ensureElement } from '../utils/utils';
 
 export class Page extends Component<IPage> {
-    protected _counter: HTMLElement;
-    protected _catalog: HTMLElement;
-    protected _wrapper: HTMLElement;
-    protected _basket: HTMLElement;
+	protected _basket: HTMLElement;
+	protected _basketCounter: HTMLElement;
+	protected _gallery: HTMLElement;
+	protected _wrapper: HTMLElement;
 
+	constructor(container: HTMLElement, protected events: IEvents) {
+		super(container);
 
-    constructor(container: HTMLElement, protected events: IEvents) {
-        super(container);
+		this._basket = ensureElement<HTMLElement>('.header__basket');
+		this._basketCounter = ensureElement<HTMLElement>('.header__basket-counter');
+		this._gallery = ensureElement<HTMLElement>('.gallery');
+		this._wrapper = ensureElement<HTMLElement>('.page__wrapper');
 
-        this._counter = ensureElement<HTMLElement>('.header__basket-counter');
-        this._catalog = ensureElement<HTMLElement>('.catalog__items');
-        this._wrapper = ensureElement<HTMLElement>('.page__wrapper');
-        this._basket = ensureElement<HTMLElement>('.header__basket');
+		this._basket.addEventListener('click', () => {
+			this.events.emit('basket:open');
+		});
+	}
 
-        this._basket.addEventListener('click', () => {
-            this.events.emit('bids:open');
-        });
-    }
+	set counter(value: number) {
+		this.setText(this._basketCounter, String(value));
+	}
 
-    set counter(value: number) {
-        this.setText(this._counter, String(value));
-    }
+	set catalog(products: HTMLElement[]) {
+		this._gallery.replaceChildren(...products);
+	}
 
-    set catalog(items: HTMLElement[]) {
-        this._catalog.replaceChildren(...items);
-    }
-
-    set locked(value: boolean) {
-        if (value) {
-            this._wrapper.classList.add('page__wrapper_locked');
-        } else {
-            this._wrapper.classList.remove('page__wrapper_locked');
-        }
-    }
+	set locked(value: boolean) {
+		this.toggleClass(this._wrapper, 'page__wrapper_locked', value);
+	}
 }

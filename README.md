@@ -59,19 +59,19 @@ interface IWebLarekData {
     price: number
   }
 
-type IWebLarekItem = Pick<IWebLarekData, 'id' | 'title' | 'category' | 'price'>
-
-type IWebLarekItemBasket = Pick<IWebLarekData, 'id' | 'title' | 'price'>
-
-type IWebLarekDataID = Pick<IWebLarekData, 'id'>
+interface IWebLarekProduct extends IWebLarekData {
+	buttonTitle?: string;
+	cardIndex?: string;
+}
 
 ### Данные формы
 
-interface IFormData {
-  address: string
-  payment: string
-  emailAdress: string
-  phoneNumber: string
+interface IFormsOrder {
+  adress: string;
+	paymentInfo: string;
+	emailAdress: string;
+	phoneNumber: string;
+	buttons: string[];
 }
 
 ### Ошибки ввода формы
@@ -87,12 +87,65 @@ interface IForm {
   setField(field: keyof IFromData, value: string): void
 }
 
-### Корзина
+interface IProductActions {
+	onClick: (event: MouseEvent) => void;
+}
 
-interface IBasket {
-  items: [];
-  add(id: string): void;
-  remove(id: string): void
+interface ISuccessActions {
+	onClick: () => void;
+}
+
+type PaymentMethod = 'cash' | 'card';
+
+interface IOrderAdress {
+	address: string;
+	payment: string;
+}
+
+interface IOrderContacts {
+	email: string;
+	phone: string;
+}
+
+interface IOrder extends IOrderAdress, IOrderContacts {
+	items: string[];
+	total: number;
+}
+
+interface IOrderResult {
+	id: string;
+	total: number;
+}
+
+interface IAppState {
+	catalog: IWebLarekData[];
+	basket: string[];
+	order: IFormsOrder | null;
+}
+
+interface IPage {
+	counter: number;
+	catalog: HTMLElement[];
+	locked: boolean;
+}
+
+interface IModal {
+	content: HTMLElement;
+}
+
+interface IFormState {
+	valid: boolean;
+	errors: string[];
+}
+
+interface ISuccess {
+	total: number;
+}
+
+interface IWebShopApi {
+	getProductList: () => Promise<IWebLarekData[]>;
+	getProductItem: (id: string) => Promise<IWebLarekData>;
+	postUserOrder: (order: IOrder) => Promise<IOrderResult>;
 }
 
 ## Архитектура проекта
@@ -122,7 +175,7 @@ interface IBasket {
 Класс отвечает за действия с API и является дочерним классу Api.
 Конструктор класса содержит строку cdn.
 Класс имеет методы:
-• getProduct - для получения товара с сервера;
+• getProductItem - для получения товара с сервера;
 • getProductsList - для получения всего списка товаров с сервера;
 • postUserOrder - для отправки запроса пользователя на покупу выбранных товаров.
 
@@ -132,7 +185,41 @@ interface IBasket {
 Класс отвечает за отображение компонентов и является родительским классом для всех компонентов отображения.
 Конструктор класса содержит контейнер с которым будут производится дальнейшие действия.
 Класс Component является дженериком и будет принимать в себя следующие типы: 
-<IWebLarekItemPage>, <Page>, <Success>, <Modal>, <Form>, <BasketCompenent>, <ProductComponent>. 
+interface IBasket {
+    id: string;
+    price: number;
+    total: number;
+    items: string[];
+    };
+
+    interface IFormState {
+	  valid: boolean;
+	  errors: string[];
+};
+
+interface IModal {
+	content: HTMLElement;
+};
+
+interface ISuccess {
+	total: number;
+}
+
+interface IPage {
+	counter: number;
+	catalog: HTMLElement[];
+	locked: boolean;
+}
+
+interface IWebLarekData {
+	id: string;
+	title: string;
+	description?: string;
+	category: string;
+	price: number | null;
+	image: string;
+}
+
 Класс имеет такие методы:
 • toggleClass - для переключения класса переданного элемента;
 • setText - для установки текстового содержимого переданному элементу;
@@ -159,10 +246,13 @@ interface IBasket {
 Класс имеет такие методы:
 • set title - для установки названия товара;
 • set price - для установки цены товара;
-• set index - для установки индекса товара;
+• set id - для установки индекса товара;
 • set image - для установки изображения товара;
 • set description - для установки описание товара;
 • set productType - для установки типа товара (софт-скил, другое...).
+• set button - для установки текста кнопки;
+• toggleButton - для вкл/выкл кнопки покупки;
+• setCategory - для установки категории товару;
 
 ### Класс Form
 Класс отвечает за отображение форм на экране пользователя.
@@ -180,7 +270,7 @@ interface IBasket {
 Поля класса содержат радио кнопки с выбором способа оплаты, свою кнопку сабмита формы, поле инпут - наследуется от Form.
 Класс имеет метод:
 • set adress - для установки в инпут пользовательского значения;
-• set paymentStatus - для управления классами у элементов кнопок.
+• set buttons - для управления классами у элементов кнопок.
 
 ### Класс FormContacts
 Класс отвечает за форму, в которую пользователь попадает после подвтерждения способа оплата и введения своего адреса.
@@ -196,6 +286,8 @@ interface IBasket {
 Поля класса содержат кнопки закрытия модальных окон и контент, отображаемый в модальом окне.
 Класс имеет такие методы:
 • set content - для установки содержимого компонента;
+• toggleModal - для переключения класса 'active' у модальног окна;
+• handleEscape - для реализации закрытия модального окна по клику на Escape;
 • open - для добавления класса 'modal_active' и выведение модального окна на экран пользователя;
 • close - для удаления класса 'modal_active' у переданного элемента и сокрытие его с экрана пользователя;
 • render - для выведения модального окна посредством метода Component с добавлением метода open у Modal. 
@@ -205,7 +297,7 @@ interface IBasket {
 Конструктор класса содержит контейнер и события.
 Поля класса содержат кнопку и описание успешно завершенной покупки.
 Класс имеет такие методы:
-• set success - для заполнения поля успешно завершенной покупки.
+• set total - для заполнения поля успешно завершенной покупки.
 
 ### Класс Page
 Класс отвечает за отображение страницы на экране пользователя.
@@ -223,32 +315,38 @@ interface IBasket {
 Класс имеет метод:
 • emitChanges - сообщает, что модель изменилась и вызывает событие.
 
-### Класс AppDataBasket
-Класс отвечает за логику работы корзины на сайте. Дочерний класс классу Model.
-Класс имеет такие методы:
-• add(id: string): void - для добавления в корзину товара;
-• remove(id: string): void - для того, чтобы убрать товар из корзины по клику;
-• clearBasket(): void - для очистки корзины;
-• getTotal(id: string): number - для подсчета количества добавленных в корзину товаров;
-• hasItem(): boolean - для проверки наличия определенного (по id) товара в корзине;
-• makeOrderArray(items: IWebLarekDataID): [] - для формирования массива состоящего из id товаров выбранных пользователей с целью его использования при отправке заказа на сервер.
+### AppData {
+  Поля класса:
+	basket: IWebLarekData[] = [];
+	catalog: IWebLarekData[];
+	order: IOrder = {
+		email: '',
+		phone: '',
+		items: [],
+		payment: '',
+		address: '',
+		total: 0,
+	};
+	preview: string | null;
+	formErrors: FormErrors = {};
+  
+  Класс отвечает за логику работы данных на сайте.
+  Класс имеет методы:
 
-### Класс AppDataForm
-Класс отвечает за текущее состояние формы на сайте.
-Класс содержит в себе все данные формы, а также, данные ошибок.
-Класс имеет такие методы:
-• setField - для установки состояния инпута;
-• clearForm - для очистки полей формы;
-• validateFormPayment - для валидации формы с выбором способа оплаты;
-• validateFormContacts - для валидации формы с контактами пользователя;
-• sendOrder - для возвращения объекта с данными с целью формирования заказ на сервер.
-
-### Класс AppDataProductsList
-Класс отвечает за состояние товаров указанных на сайте.
-Класс содержит массив из всех товаров.
-Класс имеет такие методы:
-• setProducts - для того, чтобы внести товары в общий список товаров на сайте;
-• getProduct - для того, чтобы получить доступ к необходиму товару из массива;
-• getProducts - для получения всего массива товаров.
-
-
+	• getBasketItems - для получения продуктов;
+	• addToBasket - для добавления в корзину продуктов;
+	• removeFromBasket - для удаления продуктов из корзины;
+	• initBasket - для очистки корзины
+	• getTotal - дя получения общей суммы заказа;
+	• setCatalog - для установки продуктов в галерею;
+	• setPreview - для установки продукта в режиме preview;
+	• isProductAlreadyAdded - для проверки наличия продукта в корзине;
+	• setOrder - для формирования заказа;
+	• setPayment - для установки способа оплаты;
+	• setAddress - для установки адреса;
+	• setEmail - для установки адреса эл. почты;
+	• setPhone - для установки номера телефона;
+	• validateOrderPaymentMethod - для валидации формы выбора способа оплаты;
+	• validateOrderContacts - для валидации формы с указанием контактов;
+	• setOrderField - для установки полей формы заказа;
+	• setContactsField - для установки полей формы с указанием контактов;
