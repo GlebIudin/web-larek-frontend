@@ -1,11 +1,11 @@
 import { Component } from './base/Component';
 import { ensureElement } from '../utils/utils';
-import { IWebLarekData, IProductActions } from '../types';
+import { IWebLarekData, IWebLarekProduct, IProductActions } from '../types';
 
 
 
-export class ProductComponent extends Component<IWebLarekData> {
-	protected _id?: HTMLElement;
+export class ProductComponent extends Component<IWebLarekProduct> {
+	protected _cardIndex?: HTMLElement;
 	protected _title: HTMLElement;
 	protected _description?: HTMLElement;
 	protected _image?: HTMLImageElement;
@@ -16,7 +16,7 @@ export class ProductComponent extends Component<IWebLarekData> {
 	constructor(container: HTMLElement, actions?: IProductActions) {
 		super(container);
 
-		this._id = container.querySelector('.basket__item-index');
+		this._cardIndex = container.querySelector('.basket__item-index');
 		this._title = ensureElement<HTMLElement>('.card__title', container);
 		this._description = container.querySelector('.card__text');
 		this._image = container.querySelector('.card__image');
@@ -110,11 +110,11 @@ export class ProductComponent extends Component<IWebLarekData> {
 		return this._category.textContent || '';
 	}
 
-	set cardID(value: string) {
-		this._id.textContent = value;
+	set cardIndex(value: string) {
+		this._cardIndex.textContent = value;
 	}
 
-	get cardID(): string {
-		return this._id.textContent || '';
+	get cardIndex(): string {
+		return this._cardIndex.textContent || '';
 	}
 }

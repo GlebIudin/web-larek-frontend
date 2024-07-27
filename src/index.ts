@@ -10,7 +10,7 @@ import { BasketComponent } from './components/common/BasketComponent';
 import { FormPayment, FormContacts } from './components/common/Form';
 import { Success } from './components/common/Success';
 import { ProductComponent } from './components/ProductComponent';
-import { IOrderAddress, IOrderContacts, IWebLarekData, CatalogEvents } from './types';
+import { IOrderAddress, IOrderContacts, IWebLarekData, CatalogEvents, IWebLarekProduct } from './types';
 
 const cardCatalogTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const cardPreviewTemplate = ensureElement<HTMLTemplateElement>('#card-preview');
@@ -93,34 +93,21 @@ function renderProductModal(card: ProductComponent, product: IWebLarekData): voi
 	});
 }
 
-// Добавляет продукт в корзину.
-function addProductToBasket(product: IWebLarekData) {
-	events.emit('basket:add', product);
-}
-
-// Удаляет продукт из корзины.
-function removeProductFromBasket(product: IWebLarekData) {
-	events.emit('basket:remove', product);
-}
-
-// Проверяет, есть ли продукт в корзине, и в зависимости 
-// от этого вызывает соответствующую функцию для добавления или удаления продукта.
 function toggleProductInBasket(product: IWebLarekData) {
-	if (appState.basket.indexOf(product) === -1) {
-		addProductToBasket(product);
-	} else {
-		removeProductFromBasket(product);
-	}
-}
-
-// Актуальное кол-во продуктов в корзине
-function updateBasketTotal() {
-	return appState.getTotal();
+    const isProductInBasket = appState.basket.includes(product);
+    
+    if (isProductInBasket) {
+        events.emit('basket:remove', product);
+    } else {
+        events.emit('basket:add', product);
+    }
+    
+    return appState.getTotal(); // Возвращает актуальное кол-во продуктов в корзине
 }
 
 // Рендерим модалку корзины
 function renderBasketModal() {
-	const total = updateBasketTotal();
+	const total = appState.getTotal();
 	const basketContent = basket.render({ price: total });
 
 	modal.render({
@@ -133,7 +120,7 @@ function updateBasketItems() {
 }
 
 // Создаем и рендерим карточку продукта
-function createBasketItemCard(product: IWebLarekData, id: number) {
+function createBasketItemCard(product: IWebLarekProduct, cardIndex: number) {
 	const card = new ProductComponent(cloneTemplate(cardBasketTemplate), {
 		onClick: () => {
 			events.emit('basket:remove', product);
@@ -141,9 +128,9 @@ function createBasketItemCard(product: IWebLarekData, id: number) {
 	});
 
 	return card.render({
+		cardIndex: (cardIndex + 1).toString(),
 		title: product.title,
 		price: product.price,
-		id: (id + 1).toString()
 	});
 }
 

@@ -62,9 +62,9 @@ export class AppData extends Model<IAppState> {
 		return this.basket.some((basketItem) => basketItem.id === product.id);
 	}
 
-	setOrder() {
-		this.order.items = this.getBasketItems().map((product) => product.id);
-		this.order.total = this.getTotal();
+	setOrder() { 
+		this.order.items = this.basket.map((product) => product.id); 
+		this.order.total = this.getTotal(); 
 	}
 
 	setPayment(paymentInfo: PaymentMethod) {

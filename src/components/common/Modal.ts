@@ -24,25 +24,25 @@ export class Modal extends Component<IModal> {
 		this._content.replaceChildren(value);
 	}
 
-	private _toggleModal(state = true) {
+	private toggleModal(state = true) {
 		this.toggleClass(this.container, 'modal_active', state);
 	}
 
-	private _handleEscape = (evt: KeyboardEvent) => {
+	private handleEscape = (evt: KeyboardEvent) => {
 		if (evt.key === 'Escape') {
 			this.close();
 		}
 	};
 
 	open() {
-		this._toggleModal();
-		document.addEventListener('keydown', this._handleEscape);
+		this.toggleModal();
+		document.addEventListener('keydown', this.handleEscape);
 		this.events.emit('modal:open');
 	}
 
 	close() {
-		this._toggleModal(false);
-		document.removeEventListener('keydown', this._handleEscape);
+		this.toggleModal(false);
+		document.removeEventListener('keydown', this.handleEscape);
 		this.content = null;
 		this.events.emit('modal:close');
 	}
