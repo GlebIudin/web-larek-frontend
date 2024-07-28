@@ -46,9 +46,14 @@ export class Form<T> extends Component<IFormState> {
 
 	render(state: Partial<T> & IFormState) {
 		const { valid, errors, ...inputs } = state;
+		this.reset();
 		super.render({ valid, errors });
 		Object.assign(this, inputs);
 		return this.container;
+	}
+
+	reset() {
+		this.container.reset();
 	}
 }
 
@@ -100,6 +105,10 @@ export class FormPayment extends Form<IFormsOrder> {
 		this._buttons.forEach((button) => {
 			this.toggleClass(button, 'button_alt-active', button.name === this._selectedPaymentMethod);
 		});
+		this._submit = ensureElement<HTMLButtonElement>(
+			'button[type=submit]',
+			this.container
+		);
 	}
 
 	set adress(value: string) { 

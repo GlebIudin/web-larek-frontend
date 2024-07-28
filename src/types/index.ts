@@ -27,7 +27,7 @@ export interface IFormsOrder {
 	buttons: string[];
 }
 
-export type FormErrors = Partial<Record<keyof IOrder, string>>;
+export type FormErrors = Partial<Record<keyof IOrderMetaInfo, string>>;
 
 export interface IProductActions {
 	onClick: (event: MouseEvent) => void;
@@ -49,7 +49,9 @@ export interface IOrderContacts {
 	phone: string;
 }
 
-export interface IOrder extends IOrderAddress, IOrderContacts {
+export interface IOrderMetaInfo extends IOrderAddress, IOrderContacts {}
+
+export interface IOrder extends IOrderMetaInfo {
 	items: string[];
 	total: number;
 }

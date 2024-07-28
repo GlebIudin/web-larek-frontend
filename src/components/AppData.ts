@@ -1,24 +1,23 @@
 import { Model } from './base/Model';
 import {
 	IWebLarekData,
-	IOrder,
+	IOrderMetaInfo,
 	IOrderAddress,
 	IOrderContacts,
 	FormErrors,
 	IAppState,
-	PaymentMethod
+	PaymentMethod,
+	IOrder
 } from '../types';
 
 export class AppData extends Model<IAppState> {
 	basket: IWebLarekData[] = [];
 	catalog: IWebLarekData[];
-	order: IOrder = {
+	orderInfo: IOrderMetaInfo = {
 		email: '',
 		phone: '',
-		items: [],
 		payment: '',
 		address: '',
-		total: 0,
 	};
 	preview: string | null;
 	formErrors: FormErrors = {};
@@ -62,51 +61,57 @@ export class AppData extends Model<IAppState> {
 		return this.basket.some((basketItem) => basketItem.id === product.id);
 	}
 
-	setOrder() { 
-		this.order.items = this.basket.map((product) => product.id); 
-		this.order.total = this.getTotal(); 
+	getOrder(): IOrder { 
+		return {
+			...this.orderInfo,
+			total: this.getTotal(),
+			items: this.basket.map((item) => item.id)
+		}
 	}
 
 	setPayment(paymentInfo: PaymentMethod) {
-		this.order.payment = paymentInfo;
+		this.orderInfo.payment = paymentInfo;
 		this.validateOrderPaymentMethod();
 	}
 
 	setAddress(address: string) {
-		this.order.address = address;
+		this.orderInfo.address = address;
 		this.validateOrderPaymentMethod();
 	}
 
 	setEmail(emailAdress: string): void {
-		this.order.email = emailAdress;
+		this.orderInfo.email = emailAdress;
 		this.validateOrderContacts();
 	}
 
 	setPhone(phoneNumber: string): void {
-		this.order.phone = phoneNumber;
+		this.orderInfo.phone = phoneNumber;
 		this.validateOrderContacts();
 	}
 
 	setOrderField(field: keyof IOrderAddress, value: string) {
-		this.order[field] = value;
+		this.orderInfo[field] = value;
 		if (this.validateOrderPaymentMethod()) {
-			this.events.emit('order:ready', this.order);
+			this.events.emit('order:ready', this.orderInfo);
 		}
 	}
 
 	setContactsField(field: keyof IOrderContacts, value: string) {
-		this.order[field] = value;
+		this.orderInfo[field] = value;
 		if (this.validateOrderContacts()) {
-			this.events.emit('order:ready', this.order);
+			this.events.emit('order:ready', this.orderInfo);
 		}
 	}
 
 	validateOrderPaymentMethod() {
 		const errors: typeof this.formErrors = {};
-		if (!this.order.payment) {
+		if (!this.orderInfo.payment) {
 			errors.payment = 'Выберите способ оплаты';
 		}
-		if (!this.order.address) {
+		if (!/^[а-яА-Я0-9,\.\s]+$/.test(this.orderInfo.address)) {
+			errors.address = 'Невалидный адрес';
+		}
+		if (!this.orderInfo.address) {
 			errors.address = 'Введите адрес доставки';
 		}
 		this.formErrors = errors;
@@ -116,10 +121,16 @@ export class AppData extends Model<IAppState> {
 
 	validateOrderContacts() {
 		const errors: typeof this.formErrors = {};
-		if (!this.order.email) {
+		if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$$/.test(this.orderInfo.email)) {
+			errors.email = 'Невалидная почта';
+		}
+		if (!this.orderInfo.email) {
 			errors.email = 'Введите Email';
 		}
-		if (!this.order.phone) {
+		if (!/^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$/.test(this.orderInfo.phone)) {
+			errors.phone = 'Невалидный телефон';
+		}
+		if (!this.orderInfo.phone) {
 			errors.phone = 'Введите номер телефона';
 		}
 		this.formErrors = errors;

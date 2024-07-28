@@ -26,7 +26,7 @@ const appState = new AppData({}, events);
 const page = new Page(document.body, events);
 const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events);
 const basket = new BasketComponent(cloneTemplate(basketTemplate), events);
-const orderForm = new FormPayment(cloneTemplate(orderTemplate), events);
+const paymentsForm = new FormPayment(cloneTemplate(orderTemplate), events);
 const contactsForm = new FormContacts(cloneTemplate(contactsTemplate), events);
 const success = new Success(cloneTemplate(successTemplate), {
 	onClick: () => modal.close(),
@@ -150,12 +150,13 @@ const renderModal = (formType: string) => {
 	let content;
 
 	if (formType === 'order') {
-		content = orderForm.render({
+		content = paymentsForm.render({
 			payment: '',
 			address: '',
 			valid: false,
 			errors: [],
 		});
+		paymentsForm.updateButtonClasses();
 	} else if (formType === 'contacts') {
 		content = contactsForm.render({
 			phone: '',
@@ -164,6 +165,7 @@ const renderModal = (formType: string) => {
 			valid: false,
 			errors: [],
 		});
+		//contactsForm.updateButtonClasses();
 	}
 
 	modal.render({
@@ -181,10 +183,10 @@ function updateContactsField(field: keyof IOrderContacts, value: string) {
 }
 
 // Обработка ошибок адреса
-function handleAddressErrors(errors: Partial<IOrderAddress>) {
+function handlePaymentsErrors(errors: Partial<IOrderAddress>) {
 	const { address, payment } = errors;
-	orderForm.valid = !payment && !address;
-	orderForm.errors = formatErrors({ payment, address });
+	paymentsForm.valid = !payment && !address;
+	paymentsForm.errors = formatErrors({ payment, address });
 }
 
 // Обработка ошибок контактов
@@ -207,22 +209,23 @@ webShopApi
 	.then(appState.setCatalog.bind(appState))
 	.catch(console.error);
 
+
+function resetForms() {
+	contactsForm.reset();
+	paymentsForm.reset();
+}	
+
 // Функция-обработчик события, в которой вызывается установка заказа и размещение заказа.
 function handleContactSubmit() {
-	setOrder();
 	placeOrder()
 		.then(handleOrderSuccess)
-		.catch(handleOrderError);
-}
-
-// Функция для установки заказа в `appState`
-function setOrder() {
-	appState.setOrder();
+		.catch(handleOrderError)
+		.finally(resetForms);
 }
 
 // Функция, которая вызывает API для размещения заказа и возвращает промис
 function placeOrder() {
-	return webShopApi.postUserOrder(appState.order);
+	return webShopApi.postUserOrder(appState.getOrder());
 }
 
 // Функция, обрабатывающая успешный ответ при размещении заказа.
@@ -298,7 +301,7 @@ events.on('basket:change', () => {
 	page.counter = appState.basket.length;
 });
 
-events.on('formPaymentInvalid:change', handleAddressErrors);
+events.on('formPaymentInvalid:change', handlePaymentsErrors);
 
 events.on('formContactsInvalid:change', handleContactsErrors);
 

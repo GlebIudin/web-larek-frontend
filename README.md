@@ -97,7 +97,7 @@ interface ISuccessActions {
 
 type PaymentMethod = 'cash' | 'card';
 
-interface IOrderAdress {
+interface IOrderAddress {
 	address: string;
 	payment: string;
 }
@@ -107,7 +107,9 @@ interface IOrderContacts {
 	phone: string;
 }
 
-interface IOrder extends IOrderAdress, IOrderContacts {
+interface IOrderMetaInfo extends IOrderAddress, IOrderContacts {}
+
+interface IOrder extends IOrderMetaInfo {
 	items: string[];
 	total: number;
 }
@@ -116,7 +118,6 @@ interface IOrderResult {
 	id: string;
 	total: number;
 }
-
 interface IAppState {
 	catalog: IWebLarekData[];
 	basket: string[];
@@ -253,6 +254,7 @@ interface IWebLarekData {
 • set button - для установки текста кнопки;
 • toggleButton - для вкл/выкл кнопки покупки;
 • setCategory - для установки категории товару;
+• set cardIndex - для установки корректного порядкового номера в свойство cardIndex продукта.
 
 ### Класс Form
 Класс отвечает за отображение форм на экране пользователя.
@@ -262,7 +264,8 @@ interface IWebLarekData {
 • onInputChange - для активации события после изменения содержимого полей формы;
 • set vaild - для придания полю вводу валидности;
 • set errors - для выведения ошибок при непрохождении поля формы валидации;
-• render - для выведения на страницу формы.
+• render - для выведения на страницу формы,
+• reset - обнуляет значения инпутов переданного контейнера-формы.
 
 ### Класс FormPayment
 Класс отвечает за первую форму в которую попадает пользователей после нажатия сабмита в форме подтверждения заказа.
@@ -270,7 +273,9 @@ interface IWebLarekData {
 Поля класса содержат радио кнопки с выбором способа оплаты, свою кнопку сабмита формы, поле инпут - наследуется от Form.
 Класс имеет метод:
 • set adress - для установки в инпут пользовательского значения;
-• set buttons - для управления классами у элементов кнопок.
+• set buttons - для управления классами у элементов кнопок;
+• selectPaymentMethod - для вызовава метода `onInputChange` с типом 'payment' и значением имени выбранного метода;
+• updateButtonClasses - для нахождения кнопки отправки формы и сохранения её в свойство `_submit`.
 
 ### Класс FormContacts
 Класс отвечает за форму, в которую пользователь попадает после подвтерждения способа оплата и введения своего адреса.
@@ -317,15 +322,13 @@ interface IWebLarekData {
 
 ### AppData {
   Поля класса:
-	basket: IWebLarekData[] = [];
-	catalog: IWebLarekData[];
-	order: IOrder = {
+	basket: IWebLarekData[] = []; - данные корзины;
+	catalog: IWebLarekData[]; - данные каталога товаров;
+	order: IOrderMetaInfo = { - данные необходимые для формирования заказа
 		email: '',
 		phone: '',
-		items: [],
 		payment: '',
 		address: '',
-		total: 0,
 	};
 	preview: string | null;
 	formErrors: FormErrors = {};
@@ -341,7 +344,7 @@ interface IWebLarekData {
 	• setCatalog - для установки продуктов в галерею;
 	• setPreview - для установки продукта в режиме preview;
 	• isProductAlreadyAdded - для проверки наличия продукта в корзине;
-	• setOrder - для формирования заказа;
+	• getOrder - для формирования заказа;
 	• setPayment - для установки способа оплаты;
 	• setAddress - для установки адреса;
 	• setEmail - для установки адреса эл. почты;

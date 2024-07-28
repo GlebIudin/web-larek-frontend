@@ -1,5 +1,5 @@
 import { Api, ApiListResponse } from './base/api';
-import { IOrder, IOrderResult, IWebLarekData, IWebShopApi } from '../types';
+import { IOrder, IOrderMetaInfo, IOrderResult, IWebLarekData, IWebShopApi } from '../types';
 
 export class WebShopApi extends Api implements IWebShopApi {
 	readonly _url: string;
