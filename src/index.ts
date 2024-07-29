@@ -47,10 +47,10 @@ function renderProductCard(product: IWebLarekData) {
 }
 
 function updatePage() {
-    // Обновление каталога товаров
-    page.catalog = appState.catalog.map(renderProductCard);
-    // Обновление счетчика товаров в корзине
-    page.counter = appState.getBasketItems().length;
+	// Обновление каталога товаров
+	page.catalog = appState.catalog.map(renderProductCard);
+	// Обновление счетчика товаров в корзине
+	page.counter = appState.getBasketItems().length;
 }
 
 // Функция создания карточки продукта
@@ -108,24 +108,24 @@ function renderBasketModal() {
 
 // Функция обновления инфы в корзине
 function updateBasketItems() {
-    // Обновляем содержимое корзины
-    basket.items = appState.basket.map((product, id) => {
-        const card = new ProductComponent(cloneTemplate(cardBasketTemplate), {
-            onClick: () => {
-                events.emit('basket:remove', product);
-            },
-        });
+	// Обновляем содержимое корзины
+	basket.items = appState.basket.map((product, id) => {
+		const card = new ProductComponent(cloneTemplate(cardBasketTemplate), {
+			onClick: () => {
+				events.emit('basket:remove', product);
+			},
+		});
 
-        return card.render({
-            cardIndex: (id + 1).toString(),
-            title: product.title,
-            price: product.price,
-        });
-    });
-    
-    // Обновляем общие данные корзины
-    basket.total = appState.getTotal();
-    page.counter = appState.basket.length;
+		return card.render({
+			cardIndex: (id + 1).toString(),
+			title: product.title,
+			price: product.price,
+		});
+	});
+
+	// Обновляем общие данные корзины
+	basket.total = appState.getTotal();
+	page.counter = appState.basket.length;
 }
 
 // Универсальная функция для открытия модалок форм по флагу
@@ -139,7 +139,7 @@ const renderModal = (formType: string) => {
 			valid: false,
 			errors: [],
 		});
-		paymentsForm.updateButtonClasses();
+		paymentsForm.updateButtonClasses(appState.getOrder().payment ?? '');
 	} else if (formType === 'contacts') {
 		content = contactsForm.render({
 			phone: '',
@@ -148,7 +148,6 @@ const renderModal = (formType: string) => {
 			valid: false,
 			errors: [],
 		});
-		//contactsForm.updateButtonClasses();
 	}
 
 	modal.render({
@@ -162,8 +161,8 @@ function handleOrderChange(data: { field: keyof IOrderAddress, value: string }) 
 }
 
 function handleContactChange(data: { field: keyof IOrderContacts, value: string }) {
-    const { field, value } = data;
-    appState.setContactsField(field, value);
+	const { field, value } = data;
+	appState.setContactsField(field, value);
 }
 
 // Обработка ошибок адреса
@@ -230,8 +229,8 @@ events.on('modal:close', () => {
 });
 
 events.on('order:open', () => {
-    appState.resetOrderInfo(); // Сброс состояния формы
-    renderModal('order');
+	appState.resetOrderInfo(); // Сброс состояния формы
+	renderModal('order');
 });
 
 events.on('order:submit', () => {
