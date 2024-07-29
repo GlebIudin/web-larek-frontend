@@ -10,7 +10,7 @@ import { BasketComponent } from './components/common/BasketComponent';
 import { FormPayment, FormContacts } from './components/common/Form';
 import { Success } from './components/common/Success';
 import { ProductComponent } from './components/ProductComponent';
-import { IOrderAddress, IOrderContacts, IWebLarekData, CatalogEvents, IWebLarekProduct } from './types';
+import { IOrderAddress, IOrderContacts, IWebLarekData, CatalogEvents } from './types';
 
 const cardCatalogTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
 const cardPreviewTemplate = ensureElement<HTMLTemplateElement>('#card-preview');
@@ -46,37 +46,28 @@ function renderProductCard(product: IWebLarekData) {
 	});
 }
 
-// Функция для обновления каталога на странице
-function updateCatalog() {
-	page.catalog = appState.catalog.map(renderProductCard);
-}
-
-// Функция для обновления счетчика товаров в корзине
-function updateCounter() {
-	page.counter = appState.getBasketItems().length;
+function updatePage() {
+    // Обновление каталога товаров
+    page.catalog = appState.catalog.map(renderProductCard);
+    // Обновление счетчика товаров в корзине
+    page.counter = appState.getBasketItems().length;
 }
 
 // Функция создания карточки продукта
 function createProductCard(product: IWebLarekData): ProductComponent {
 	const card: ProductComponent = new ProductComponent(cloneTemplate(cardPreviewTemplate), {
-		onClick: () => handleCardClick(product, card),
+		onClick: () => {
+			// Обработка клика по карточке
+			events.emit('card:basket', product);
+			// Обновление текста кнопки карточки
+			card.button = appState.isProductAlreadyAdded(product) ? 'Убрать' : 'В корзину';
+		}
 	});
 
 	// Установка начального состояния кнопки
-	updateCardButton(card, product);
+	card.button = appState.isProductAlreadyAdded(product) ? 'Убрать' : 'В корзину';
 
 	return card;
-}
-
-// Функция обработки клика по карточке
-function handleCardClick(product: IWebLarekData, card: ProductComponent): void {
-	events.emit('card:basket', product);
-	updateCardButton(card, product);
-}
-
-// Функция для обновления текста кнопки карточки
-function updateCardButton(card: ProductComponent, product: IWebLarekData): void {
-	card.button = appState.isProductAlreadyAdded(product) ? 'Убрать' : 'В корзину';
 }
 
 // Функция рендера модального окна с карточкой продукта
@@ -94,15 +85,15 @@ function renderProductModal(card: ProductComponent, product: IWebLarekData): voi
 }
 
 function toggleProductInBasket(product: IWebLarekData) {
-    const isProductInBasket = appState.basket.includes(product);
-    
-    if (isProductInBasket) {
-        events.emit('basket:remove', product);
-    } else {
-        events.emit('basket:add', product);
-    }
-    
-    return appState.getTotal(); // Возвращает актуальное кол-во продуктов в корзине
+	const isProductInBasket = appState.basket.includes(product);
+
+	if (isProductInBasket) {
+		events.emit('basket:remove', product);
+	} else {
+		events.emit('basket:add', product);
+	}
+
+	return appState.getTotal(); // Возвращает актуальное кол-во продуктов в корзине
 }
 
 // Рендерим модалку корзины
@@ -115,37 +106,29 @@ function renderBasketModal() {
 	});
 }
 
+// Функция обновления инфы в корзине
 function updateBasketItems() {
-	basket.items = appState.basket.map((product, id) => createBasketItemCard(product, id));
+    // Обновляем содержимое корзины
+    basket.items = appState.basket.map((product, id) => {
+        const card = new ProductComponent(cloneTemplate(cardBasketTemplate), {
+            onClick: () => {
+                events.emit('basket:remove', product);
+            },
+        });
+
+        return card.render({
+            cardIndex: (id + 1).toString(),
+            title: product.title,
+            price: product.price,
+        });
+    });
+    
+    // Обновляем общие данные корзины
+    basket.total = appState.getTotal();
+    page.counter = appState.basket.length;
 }
 
-// Создаем и рендерим карточку продукта
-function createBasketItemCard(product: IWebLarekProduct, cardIndex: number) {
-	const card = new ProductComponent(cloneTemplate(cardBasketTemplate), {
-		onClick: () => {
-			events.emit('basket:remove', product);
-		},
-	});
-
-	return card.render({
-		cardIndex: (cardIndex + 1).toString(),
-		title: product.title,
-		price: product.price,
-	});
-}
-
-// Функция для установки поля заказа
-function updateOrderField(field: keyof IOrderAddress, value: string) {
-	appState.setOrderField(field, value);
-}
-
-// Функция для обработки события изменения заказа
-function handleOrderChange(data: { field: keyof IOrderAddress, value: string }) {
-	const { field, value } = data;
-	updateOrderField(field, value);
-}
-
-// Универсальная функция для открытия модалок по флагу
+// Универсальная функция для открытия модалок форм по флагу
 const renderModal = (formType: string) => {
 	let content;
 
@@ -173,13 +156,14 @@ const renderModal = (formType: string) => {
 	});
 };
 
-function handleContactChange(data: { field: keyof IOrderContacts, value: string }) {
+function handleOrderChange(data: { field: keyof IOrderAddress, value: string }) {
 	const { field, value } = data;
-	updateContactsField(field, value);
+	appState.setOrderField(field, value);
 }
 
-function updateContactsField(field: keyof IOrderContacts, value: string) {
-	appState.setContactsField(field, value);
+function handleContactChange(data: { field: keyof IOrderContacts, value: string }) {
+    const { field, value } = data;
+    appState.setContactsField(field, value);
 }
 
 // Обработка ошибок адреса
@@ -209,65 +193,33 @@ webShopApi
 	.then(appState.setCatalog.bind(appState))
 	.catch(console.error);
 
-
-function resetForms() {
-	contactsForm.reset();
-	paymentsForm.reset();
-}	
-
-// Функция-обработчик события, в которой вызывается установка заказа и размещение заказа.
+// Обработчик события, который размещает заказ и обновляет интерфейс
 function handleContactSubmit() {
-	placeOrder()
-		.then(handleOrderSuccess)
-		.catch(handleOrderError)
-		.finally(resetForms);
-}
-
-// Функция, которая вызывает API для размещения заказа и возвращает промис
-function placeOrder() {
-	return webShopApi.postUserOrder(appState.getOrder());
-}
-
-// Функция, обрабатывающая успешный ответ при размещении заказа.
-function handleOrderSuccess() {
-	updatePageCounter();
-	renderSuccessModal();
-	clearBasket();
-}
-
-// Функция для обработки ошибок, возникающих при размещении заказа.
-function handleOrderError(error: string) {
-	console.error(error);
-}
-
-// Обновляет счетчик на странице.
-function updatePageCounter() {
-	page.counter = appState.basket.length;
-}
-
-// Отвечает за отображение модального окна с сообщением об успехе.
-function renderSuccessModal() {
-	modal.render({
-		content: success.render({
-			total: appState.getTotal(),
-		}),
-	});
-}
-
-// Очищает корзину.
-function clearBasket() {
-	appState.initBasket();
+	webShopApi.postUserOrder(appState.getOrder())
+		.then(() => {
+			// Успешный ответ
+			page.counter = appState.basket.length; // Обновляем счетчик корзины
+			modal.render({ // Отображаем модальное окно с успехом
+				content: success.render({
+					total: appState.getTotal(),
+				}),
+			});
+			appState.initBasket(); // Очищаем корзину
+		})
+		.catch((error: string) => {
+			// Обработка ошибок
+			console.error(error);
+		})
+		.finally(function resetForms() {
+			contactsForm.reset();
+			paymentsForm.reset();
+		});
 }
 
 // Подписки
 events.on('contacts:submit', handleContactSubmit);
 
 events.on('basket:open', renderBasketModal);
-
-events.on('basket:change', () => {
-	updateBasketItems();
-	basket.total = appState.getTotal();
-});
 
 events.on('modal:open', () => {
 	page.locked = true;
@@ -278,7 +230,8 @@ events.on('modal:close', () => {
 });
 
 events.on('order:open', () => {
-	renderModal('order');
+    appState.resetOrderInfo(); // Сброс состояния формы
+    renderModal('order');
 });
 
 events.on('order:submit', () => {
@@ -297,17 +250,12 @@ events.on('basket:remove', (product: IWebLarekData) => {
 	appState.removeFromBasket(product);
 });
 
-events.on('basket:change', () => {
-	page.counter = appState.basket.length;
-});
-
 events.on('formPaymentInvalid:change', handlePaymentsErrors);
 
 events.on('formContactsInvalid:change', handleContactsErrors);
 
 events.on<CatalogEvents>('products:change', () => {
-	updateCatalog();
-	updateCounter();
+	updatePage()
 });
 
 events.on(/^order\..*:change/, handleOrderChange);
@@ -322,3 +270,5 @@ events.on('preview:change', (product: IWebLarekData) => {
 	const card = createProductCard(product);
 	renderProductModal(card, product);
 });
+
+events.on('basket:change', updateBasketItems);

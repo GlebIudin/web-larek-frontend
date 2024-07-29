@@ -1,6 +1,6 @@
 import { Component } from './base/Component';
 import { ensureElement } from '../utils/utils';
-import { IWebLarekData, IWebLarekProduct, IProductActions } from '../types';
+import { IWebLarekProduct, IProductActions } from '../types';
 
 
 

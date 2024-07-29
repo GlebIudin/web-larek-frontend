@@ -109,7 +109,7 @@ export class AppData extends Model<IAppState> {
 			errors.payment = 'Выберите способ оплаты';
 		}
 		if (!/^[а-яА-Я0-9,\.\s]+$/.test(this.orderInfo.address)) {
-			errors.address = 'Невалидный адрес';
+			errors.address = 'Введите адрес доставки';
 		}
 		if (!this.orderInfo.address) {
 			errors.address = 'Введите адрес доставки';
@@ -122,19 +122,31 @@ export class AppData extends Model<IAppState> {
 	validateOrderContacts() {
 		const errors: typeof this.formErrors = {};
 		if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$$/.test(this.orderInfo.email)) {
-			errors.email = 'Невалидная почта';
+			errors.email = 'Введите Email';
 		}
 		if (!this.orderInfo.email) {
 			errors.email = 'Введите Email';
 		}
 		if (!/^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$/.test(this.orderInfo.phone)) {
-			errors.phone = 'Невалидный телефон';
+			errors.phone = 'Введите телефон';
 		}
 		if (!this.orderInfo.phone) {
-			errors.phone = 'Введите номер телефона';
+			errors.phone = 'Введите телефон';
 		}
 		this.formErrors = errors;
 		this.events.emit('formContactsInvalid:change', this.formErrors);
 		return Object.keys(errors).length === 0;
+	}
+
+	resetOrderInfo() {
+		this.orderInfo = {
+			email: '',
+			phone: '',
+			payment: '',
+			address: '',
+		};
+		this.formErrors = {};
+		this.events.emit('formPaymentInvalid:change', this.formErrors);
+		this.events.emit('formContactsInvalid:change', this.formErrors);
 	}
 }
