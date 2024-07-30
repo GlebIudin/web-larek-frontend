@@ -79,7 +79,7 @@ export class FormContacts extends Form<IFormsOrder> {
 
 export class FormPayment extends Form<IFormsOrder> { 
 	protected _adress: HTMLInputElement; 
-	protected buttons: HTMLButtonElement[]; 
+	protected buttons: HTMLButtonElement[];
 
 	constructor(container: HTMLFormElement, events: IEvents) { 
 		super(container, events); 
@@ -89,8 +89,7 @@ export class FormPayment extends Form<IFormsOrder> {
  
 		this.buttons.forEach((button) => { 
 			button.addEventListener('click', () => { 
-				this.onInputChange('payment', button.name); 
-				this.updateButtonClasses(button.name)
+				this.onInputChange('payment', button.name);
 			}); 
 		}); 
 	}
@@ -99,14 +98,13 @@ export class FormPayment extends Form<IFormsOrder> {
 		this.buttons.forEach((button) => {
 			this.toggleClass(button, 'button_alt-active', button.name === paymentType);
 		});
-	
-		this._submit = ensureElement<HTMLButtonElement>(
-			'button[type=submit]',
-			this.container
-		);
 	}
 
-	set adress(value: string) { 
+	render(state: Partial<IFormsOrder> & IFormState): HTMLFormElement {
+		return super.render(state);
+	}
+
+	set adress(value: string) {
 		this._adress.value = value; 
 	} 
 }

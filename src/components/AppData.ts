@@ -93,6 +93,8 @@ export class AppData extends Model<IAppState> {
 		this.orderInfo[field] = value;
 		if (this.validateOrderPaymentMethod()) {
 			this.events.emit('order:ready', this.orderInfo);
+		} else {
+			this.events.emit('')
 		}
 	}
 
@@ -127,7 +129,7 @@ export class AppData extends Model<IAppState> {
 		if (!this.orderInfo.email) {
 			errors.email = 'Введите Email';
 		}
-		if (!/^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$/.test(this.orderInfo.phone)) {
+		if (!/^^[+\d\s()]*\d+[+\d\s()]*$/.test(this.orderInfo.phone)) {
 			errors.phone = 'Введите телефон';
 		}
 		if (!this.orderInfo.phone) {

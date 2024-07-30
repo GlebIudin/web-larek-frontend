@@ -139,7 +139,6 @@ const renderModal = (formType: string) => {
 			valid: false,
 			errors: [],
 		});
-		paymentsForm.updateButtonClasses(appState.getOrder().payment ?? '');
 	} else if (formType === 'contacts') {
 		content = contactsForm.render({
 			phone: '',
@@ -169,6 +168,7 @@ function handleContactChange(data: { field: keyof IOrderContacts, value: string 
 function handlePaymentsErrors(errors: Partial<IOrderAddress>) {
 	const { address, payment } = errors;
 	paymentsForm.valid = !payment && !address;
+	paymentsForm.updateButtonClasses(appState.getOrder().payment);
 	paymentsForm.errors = formatErrors({ payment, address });
 }
 
